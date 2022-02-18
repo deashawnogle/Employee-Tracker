@@ -214,9 +214,35 @@ const addEmployee = () => {
 };
 
 //update Role
-const updateRole
-
-
+const updateRole = () => {
+    connection.promise().query("SELECT * from employee")
+    .then(([response]) => {
+        inquirer.prompt([
+            {
+                type: "list",
+                name: "employee",
+                message: "Which employee role needs to be update?",
+                choices: [connection.promise().query(`SELECT * FROM employee`)]
+            }
+        ]).then((res) => {
+            const updateEmployeeRole = res.employee
+            connection.promise().query("SELECT role.id, role.title FROM role")
+            .then(([response]) => {
+                inquirer.prompt([
+                    {
+                        type: "list",
+                        name: "viewRoles",
+                        message: "Which one is the new role?",
+                        choices: [connection.promise().query(`SELECT * FROM role`)]
+                    }
+                ]).then((res) => {
+                    connection.promise().query("UPDATE employee SET role_id = ? WHERE id = ?", [res.viewRoles, updateEmployeeRole])
+                    .then(() => mainPrompts())
+                })
+            })
+        })
+    })
+}
 
 function exit() {
     process.exit()
