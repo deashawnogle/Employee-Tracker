@@ -1,13 +1,20 @@
 //Dependencies
-const express = require('express');
+const inquirer = require('inquirer');
+// const express = require('express');
+const util = require('util')
 const mysql = require('mysql2');
-const { table } = require('console-table-printer');
-const PORT = process.env.PORT || 3001;
-const app = express();
+const connection = require ("./db/connection.js");
+// const { async } = require("rxjs");
 
 const figlet = require('figlet');
 
+const consoleTable = require("console.table");
+const { response } = require('express');
+// const { response } = require('express');
+
 //logo
+console.log('\n')
+
 figlet('Employee Tracker', function(err, data) {
     if (err) {
         console.log('Something went wrong...');
@@ -15,56 +22,47 @@ figlet('Employee Tracker', function(err, data) {
         return;
     }
     console.log(data)
+    console.log('\n')
+    console.log('\n')
+    console.log('\n')
 });
 
 //inquirer prompts
-const prompts = {
+const mainPrompts = () => {
 
-    mainPrompt: [
+    inquirer.prompt([
         {
             type:"list",
             name: "choice",
             message: "What would you like to do?",
             choices: [
                     {
+                        name: " View All Departments",
+                        value: "viewDepartments"
+                    },
+                    {
                         name: "View All Employees",
-                        value: "view_employees"
+                        value: "viewEmployees"
                     },
                     {
-                        name: "View All Employees By Roles",
-                        value: "view_employees_role"
-                    },
-                    {
-                        name: "View All Employees By Department",
-                        value: "view_employees_department"
+                        name: "View All Roles",
+                        value: "viewRoles"
                     },
                     {
                         name: "Add Employee",
-                        value: "add_employee"
+                        value: "addEmployee"
                     },
                     {
                         name: "Add Department",
-                        value: "add_department"
+                        value: "addDepartment"
                     },
                     {
                         name: "Add Role",
-                        value: "add_role"
-                    }, 
-                    {
-                        name: "Update Employee Role",
-                        value: "update_role"
-                    }, 
-                    {
-                        name: "Delete Employee",
-                        value: "delete_employee"
+                        value: "addRole"
                     },
                     {
-                        name: "Delete Role",
-                        value: "delete_role"
-                    },
-                    {
-                        name: "Delete Department",
-                        value: "delete_department"
+                        name: "Update Role",
+                        value: "updateRole"
                     },
                     {
                         name: "Exit",
@@ -72,66 +70,154 @@ const prompts = {
                     }
                 ]
             }
-        ],
-    searchDepartment: [
-            {
-                type: "list",
-                name: "department",
-                message: "What department would you like to search?",
-                choices: [
-                    {
-                    name: "Sales Department",
-                    value: "Sales"
-                    },
-                    {
-                    name: "Engineering Department",
-                    value: "Engineering"
-                    },
-                    {
-                    name: "Finance Department",
-                    value: "Finance"
-                    },
-                    {
-                    name: "Legal Department",
-                    value: "Legal"
-                    }
-                ]
-            }
-        ],
-    addRole: [
-            {
-                type: "input",
-                name: "title",
-                message: "Enter new role title."
-            },
-            {
-                type: "input",
-                name: "salary",
-                message: "Enter salary of title."
-            }
-        ],
-    addDepartment:[
-            {
-                type: "input",
-                name: "name",
-                message: "Enter new department name."
-            }
-        ],
-    addEmployee: [
-            {
-                type: "input",
-                name: "first_name",
-                message: "Enter employee's first name."
-            },
-            {
-                type: "input",
-                name: "last_name",
-                message: "Enter empployee's last name."
-            },
-            {
-                type: "input",
-                name: "manager_id",
-                message: "Enter Manager's ID."
-            }
-        ]
-    }
+        ]).then((response) => {
+            switch (response.choice) {
+                
+                case "viewEmployees":
+                        viewEmployees()
+                        break;
+                        
+                case "viewRoles":
+                        viewRoles();
+                        break;
+                
+                case "addEmployee":
+                    addEmployee();
+                    break;
+                
+                case "addDepartment":
+                    addDepartment();
+                    break;
+                
+                case "addRole":
+                    addRole();
+                    break;
+                
+                case "updateRole":
+                    updateRole();
+                    break;
+                
+                case "viewDepartments":
+                    viewDepartments();
+                    break;
+            
+                case "exit":
+                    connection.end();
+                    break;
+                }
+            })
+        }
+
+connection.connect(() => {
+    mainPrompts()
+});
+
+//view all Department
+const viewDepartments = () => {
+        connection.promise().query(
+            "SELECT * FROM department;"
+        ).then(([response]) => {
+            console.table(response)
+        }).then(() => mainPrompts()
+        )
+    };
+
+//view all Employees
+const viewEmployees = () => {
+    connection.promise().query(
+        "SELECT * FROM employee;"
+    ).then(([response]) => {
+        console.table(response)
+    }).then(() => mainPrompts()
+    )
+};
+
+//view Job titles
+const viewRoles = () => {
+    connection.promise().query(
+        "SELECT * FROM role;"
+    ).then(([response]) => {
+        console.table(response)
+    }).then(() => mainPrompts()
+    )
+};
+
+// Add department
+const addDepartment = () => {
+    inquirer.prompt([
+        {
+            type: "input",
+            name: "department",
+            message: "Add Department"
+        }
+    ]).then(res => {
+        connection.promise().query(
+            "INSERT INTO department (name) VALUES(?)", [res.department]
+        ).then(([response]) => {
+            viewDepartments()
+        })
+    })
+};
+
+//add Role
+const addRole = () => {
+    inquirer.prompt([
+        {
+            type: "input",
+            name: "title",
+            message: "What is title of the role?"
+        },
+        {
+            type: "input",
+            name: "salary",
+            message: "What is the Salary of Role?"
+        },
+        {
+            type: "input",
+            name: "department_id",
+            message: "What is the Department ID?"
+        }
+    ]).then(res => {
+        connection.promise().query(
+            "INSERT INTO role (title, salary, department_id) VALUES(?, ?, ?, ?)", [res.title, res.salary, res.department_id]
+        ).then(([response]) => {
+            viewRoles()
+        })
+    })
+};
+
+//add Role
+const addEmployee = () => {
+    inquirer.prompt([
+        {
+            type: "input",
+            name: "first_name",
+            message: "What is first name of employee?"
+        },
+        {
+            type: "input",
+            name: "last_name",
+            message: "What is last name of employee?"
+        },
+        {
+            type: "input",
+            name: "role_id",
+            message: "What is the job title of employee?"
+        }
+    ]).then(res => {
+        connection.promise().query(
+            "INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES(?, ?, ?, ?)", [res.first_name, res.last_name, parseInt(res.role_id), null]
+        ).then(([response]) => {
+            viewEmployees()
+        })
+    })
+};
+
+//update Role
+const updateRole
+
+
+
+function exit() {
+    process.exit()
+};

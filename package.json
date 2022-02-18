@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/deashawnogle/Employee-Tracker#readme",
   "dependencies": {
+    "async": "^3.2.3",
     "express": "^4.17.2",
     "figlet": "^1.5.2"
   }
