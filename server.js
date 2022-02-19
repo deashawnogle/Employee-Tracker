@@ -1,11 +1,8 @@
 //Dependencies
 const inquirer = require('inquirer');
-// const express = require('express');
 const util = require('util')
 const mysql = require('mysql2');
 const connection = require ("./db/connection.js");
-// const { async } = require("rxjs");
-
 const figlet = require('figlet');
 
 const consoleTable = require("console.table");
@@ -222,7 +219,7 @@ const updateRole = () => {
                 type: "list",
                 name: "employee",
                 message: "Which employee role needs to be update?",
-                choices: [connection.promise().query(`SELECT * FROM employee`)]
+                choices: employeeChoices
             }
         ]).then((res) => {
             const updateEmployeeRole = res.employee
