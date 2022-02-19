@@ -7,6 +7,7 @@ const figlet = require('figlet');
 
 const consoleTable = require("console.table");
 const { response } = require('express');
+const { title } = require('process');
 // const { response } = require('express');
 
 //logo
@@ -150,7 +151,7 @@ const addDepartment = () => {
     ]).then(res => {
         connection.promise().query(
             "INSERT INTO department (name) VALUES(?)", [res.department]
-        ).then(([response]) => {
+        ).then((response) => {
             viewDepartments()
         })
     })
@@ -204,7 +205,7 @@ const addEmployee = () => {
     ]).then(res => {
         connection.promise().query(
             "INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES(?, ?, ?, ?)", [res.first_name, res.last_name, parseInt(res.role_id), null]
-        ).then(([response]) => {
+        ).then((response) => {
             viewEmployees()
         })
     })
@@ -213,24 +214,41 @@ const addEmployee = () => {
 //update Role
 const updateRole = () => {
     connection.promise().query("SELECT * from employee")
-    .then(([response]) => {
+    .then((response) => {
+        const empArray = []
+
+        // for loop throu response and .push() each employees name into array
+        // {name: response[i].first_name, value:response[i].id }
+        for (let i = 0; i < response[0].length; i++) {
+            const person = {name: response[0][i].first_name + ' ' + response[0][i].last_name, value:response[0][i].id }
+            empArray.push(person)
+        }
+
+        console.log('emp array clenaed!!!', empArray)
         inquirer.prompt([
             {
                 type: "list",
-                name: "employee",
+                name: "title",
                 message: "Which employee role needs to be update?",
-                choices: employeeChoices
+                choices: empArray
             }
         ]).then((res) => {
+
             const updateEmployeeRole = res.employee
             connection.promise().query("SELECT role.id, role.title FROM role")
-            .then(([response]) => {
+            .then((roleRes) => {
+                const roleArr = []
+                for (let i = 0; i < roleRes[0].length; i++) {
+                    const job = {name: roleRes[0][i].title, value:roleRes[0][i].id }
+                    roleArr.push(job)
+                }
+                console.log('role arr', roleArr)
                 inquirer.prompt([
                     {
                         type: "list",
-                        name: "viewRoles",
+                        name: "title",
                         message: "Which one is the new role?",
-                        choices: [connection.promise().query(`SELECT * FROM role`)]
+                        choices: roleArr
                     }
                 ]).then((res) => {
                     connection.promise().query("UPDATE employee SET role_id = ? WHERE id = ?", [res.viewRoles, updateEmployeeRole])
